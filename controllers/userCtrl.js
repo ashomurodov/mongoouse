@@ -13,6 +13,10 @@ const register = async (req, res) => {
       return res.status(400).json({ message: "Invalid email!" });
     }
 
+    if (password.length < 6) {
+      return res.status(400).json({ message: "Password must be at least 6 characters." });
+    }
+
     if (password !== confirm_password) {
       return res.status(400).json({ message: "Password is incorrect!" });
     }
@@ -20,10 +24,6 @@ const register = async (req, res) => {
     const user = await userModels.findOne({ email });
     if (user) {
       return res.status(400).json({ message: "This email alreadt exist!" });
-    }
-
-    if (password.length < 6) {
-      return res.status(400).json({ message: "Password must be at least 6 characters." });
     }
 
     const passwordHash = await bcrypt.hash(password, 12);
@@ -37,19 +37,19 @@ const register = async (req, res) => {
 
     await newUser.save();
 
-    res.status(400).json({ message: "Register succuss" });
+    res.status(200).json({ message: "Register succuss" });
   } catch (error) {
     console.log(error);
     return res.status(500).json({ message: error.message });
   }
 };
 
-const checkPassword = (isMatch, res) => {
+const checkPassword = (isMatch, res, user) => {
   if (!isMatch) {
     return res.status(400).json({ message: "Password is incorrect!" });
   }
 
-  return res.status(400).json({ message: "Login success!", token: "HASKJDHKJAHDJASHDKJAHSKJDHASKJDHASKJDHKJDHJKAS" });
+  return res.status(200).json({ message: "Login success!", token: "HASKJDHKJAHDJASHDKJAHSKJDHASKJDHASKJDHKJDHJKAS", user });
 };
 
 const login = async (req, res) => {
@@ -66,15 +66,16 @@ const login = async (req, res) => {
 
       const isMatch = await bcrypt.compare(password, user_by_email.password);
 
-      checkPassword(isMatch, res);
-    } else {
+      checkPassword(isMatch, res, user_by_email);
+    } 
+    else {
       if (!user_by_phone) {
         return res.status(400).json({ message: "This phone does not exist!" });
       }
 
       const isMatch = await bcrypt.compare(password, user_by_phone.password);
 
-      checkPassword(isMatch, res);
+      checkPassword(isMatch, res, user_by_phone);
     }
   } catch (error) {
     return res.status(500).json({ message: error.message });
